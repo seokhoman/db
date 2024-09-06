@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아이디어 공유</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* 배경 설정 */
+    body {
+      background: url('https://img.freepik.com/free-photo/dragons-and-fantasy-artificial-intelligence-image_23-2150400884.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #fff;
+    }
+
+    .container {
+      margin-top: 50px;
+    }
+
+    /* 금색과 은색 광택 텍스트 */
+    .glossy-gold, .glossy-silver {
+      background: linear-gradient(45deg, #d4af37, #f8e071, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;
+      font-size: 3rem;
+      text-align: center;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), 0px 0px 20px rgba(255, 223, 0, 0.7);
+      animation: shine 2s infinite linear;
+    }
+
+    .glossy-silver {
+      background: linear-gradient(45deg, #C0C0C0, #ffffff, #C0C0C0);
+    }
+
+    @keyframes shine {
+      0% {
+        background-position: 0% 50%;
+      }
+      100% {
+        background-position: 100% 50%;
+      }
+    }
+
+    /* 폼 스타일 */
+    #idea-form {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    }
+
+    .field label {
+      font-weight: bold;
+      color: #d4af37;
+    }
+
+    .input, .textarea {
+      border-radius: 10px;
+      border: 2px solid #d4af37;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    /* 버튼 스타일 */
+    .button.is-primary {
+      background-color: #d4af37; /* 황금색 */
+      border-radius: 10px;
+      font-weight: bold;
+      border: none;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      color: #fff;
+    }
+
+    .button.is-primary:hover {
+      background-color: #C0C0C0; /* 은색 */
+      color: #d4af37; /* 황금색 텍스트 */
+      box-shadow: 0 4px 15px rgba(192, 192, 192, 0.7);
+    }
+
+    /* 카드 스타일 */
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 20px;
+    }
+
+    .card {
+      background-color: rgba(0, 0, 0, 0.85);
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.7);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      color: #ffffff
+      box-shadow: 0 12px 30px rgba(212, 175, 55, 1);
+    }
+
+    /* 카드 제목 반투명한 검은색 배경으로 변경 */
+    .card-header {
+      background-color: rgba(0, 0, 0, 0.7); /* 반투명 검은색 */
+      color: #ffffff; /* 진한 흰색 */
+    }
+    .card-header-title {
+    font-size: 1.8rem; /* 제목 글씨 크기 */
+    color: #ffffff; /* 진한 흰색 */
+    font-weight: bold;
+    }
+    .card-content .content {
+      font-size: 1rem; /* 내용 글씨 크기 */
+    }
+
+    .card-content {
+      color: #ffffff; /* 진한 흰색 */
+    }
+
+    /* 삭제 버튼 */
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: #ff6961;
+      transition: color 0.2s ease;
+    }
+
+    .delete-btn:hover {
+      color: #ff3b30;
+    }
+
+    /* 카드 하단 날짜 및 좋아요 */
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      color: #d4af37;
+    }
+
+    /* 좋아요 아이콘 */
+    .like-btn {
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: #d4af37;
+      transition: color 0.3s ease;
+    }
+
+    .like-btn.liked {
+      color: #C0C0C0; /* 은색 */
+    }
+
+    .like-btn:hover {
+      color: #C0C0C0; /* 은색 */
+    }
+
+    @media screen and (max-width: 768px) {
+      .card-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <script type="module">
+    // Firebase 설정 및 초기화
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, deleteDoc, updateDoc, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRzw5MDhDV9BcsSRLPs89XtlpdJ0Sd4u4",
+      authDomain: "stre-3f837.firebaseapp.com",
+      projectId: "stre-3f837",
+      storageBucket: "stre-3f837.appspot.com",
+      messagingSenderId: "807344964659",
+      appId: "1:807344964659:web:20590dd1374b4fe6788f46",
+      measurementId: "G-B23DH279G0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('idea-form');
+      const titleInput = document.getElementById('title-input');
+      const ideaInput = document.getElementById('idea-input');
+      const cardContainer = document.getElementById('card-container');
+
+      const ideasRef = collection(db, "ideas");
+      onSnapshot(ideasRef, (snapshot) => {
+        cardContainer.innerHTML = '';
+        snapshot.forEach((doc) => {
+          addIdeaCard(doc.id, doc.data());
+        });
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = titleInput.value.trim();
+        const idea = ideaInput.value.trim();
+        const date = new Date().toLocaleDateString();
+        const likes = 0;
+
+        if (title && idea) {
+          try {
+            await addDoc(ideasRef, { title, idea, date, likes });
+            Swal.fire('성공!', '아이디어가 추가되었습니다.', 'success');
+            form.reset();
+          } catch (error) {
+            Swal.fire('오류!', '아이디어를 저장할 수 없습니다.', 'error');
+          }
+        } else {
+          Swal.fire('경고!', '제목과 아이디어를 모두 입력하세요.', 'warning');
+        }
+      });
+
+      function addIdeaCard(id, data) {
+        const card = document.createElement('div');
+        card.classList.add('card', 'idea-card');
+        card.innerHTML = `
+          <button class="delete-btn">✖</button>
+          <header class="card-header">
+            <p class="card-header-title">${data.title}</p>
+          </header>
+          <div class="card-content">
+            <div class="content">${data.idea}</div>
+          </div>
+          <footer class="card-footer">
+            <span>날짜: ${data.date}</span>
+            <span>
+              <button class="like-btn" id="like-btn-${id}">
+                👍
+              </button>
+              <span id="like-count-${id}">${data.likes}</span>
+            </span
+          </footer>
+        `;
+        cardContainer.appendChild(card);
+
+// 삭제 버튼 이벤트
+        card.querySelector('.delete-btn').addEventListener('click', async () => {
+  const confirmation = await Swal.fire({
+    title: '정말 삭제하시겠습니까?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '삭제'
+  });
+
+  if (confirmation.isConfirmed) {
+    try {
+      await deleteDoc(doc(db, "ideas", id));
+      Swal.fire('삭제됨!', '아이디어가 삭제되었습니다.', 'success');
+    } catch (error) {
+      Swal.fire('오류!', '삭제할 수 없습니다.', 'error');
+    }
+  }
+});
+
+// 좋아요 버튼 이벤트
+const likeBtn = document.getElementById(`like-btn-${id}`);
+const likeCount = document.getElementById(`like-count-${id}`);
+
+// 좋아요 상태 확인
+const isLiked = localStorage.getItem(`liked-${id}`);
+if (isLiked) {
+  likeBtn.classList.add('liked');
+}
+
+likeBtn.addEventListener('click', async () => {
+  try {
+    let newLikes;
+    if (likeBtn.classList.contains('liked')) {
+      newLikes = data.likes - 1;
+      likeBtn.classList.remove('liked');
+      localStorage.removeItem(`liked-${id}`);
+    } else {
+      newLikes = data.likes + 1;
+      likeBtn.classList.add('liked');
+      localStorage.setItem(`liked-${id}`, true);
+    }
+
+    await updateDoc(doc(db, "ideas", id), { likes: newLikes });
+  } catch (error) {
+    Swal.fire('오류!', '좋아요를 반영할 수 없습니다.', 'error');
+  }
+});
+}
+});
+    </script> </head> <body> <section class="section"> <div class="container"> <h1 class="title glossy-gold">아이디어 공유</h1> <form id="idea-form"> <div class="field"> <label class="label">제목</label> <div class="control"> <input class="input" type="text" id="title-input" placeholder="아이디어 제목"> </div> </div> <div class="field"> <label class="label">아이디어</label> <div class="control"> <textarea class="textarea" id="idea-input" placeholder="아이디어를 입력하세요"></textarea> </div> </div> <div class="field"> <div class="control"> <button type="submit" class="button is-primary">추가</button> </div> </div> </form> <div id="card-container" class="card-container"></div> </div> </section> </body> </html> 
